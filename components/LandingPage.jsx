@@ -138,7 +138,7 @@ import { useState, useEffect, useRef } from 'react';
       const handleResetDeck = () => setCards(initialCards);
 
       return (
-        <section data-guide="swipe" className="py-12 px-4">
+        <section id="demo" data-guide="swipe" className="py-12 px-4 scroll-mt-24">
           <div className="max-w-xl mx-auto">
             <div className="text-center space-y-2 mb-6">
               <span className="px-3 py-1 rounded-full bg-[#FFB300] border-2 border-slate-900 text-xs font-black uppercase tracking-wider text-slate-950 shadow-[0_2px_0_#0f172a]">
@@ -219,13 +219,36 @@ import { useState, useEffect, useRef } from 'react';
     }
 
     // --- MAIN APP ---
-    // --- SCROLL GUIDE: the hero Squarey hops out of the hero card, docks on the right, and explains each section ---
+    const LINKEDIN_URL = 'https://www.linkedin.com/company/floorsquarehq';
+
+const LinkedInIcon = ({ className = 'w-5 h-5' }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+  </svg>
+);
+
+const NAV_LINKS = [
+  { href: '#how-it-works', label: 'How it works' },
+  { href: '#why', label: 'Why FloorSquare' },
+  { href: '#about', label: 'About' },
+  { href: '#faq', label: 'FAQ' },
+  { href: '#contact', label: 'Contact' },
+];
+
+// --- SCROLL GUIDE: the hero Squarey hops out of the hero card, docks on the right, and explains each section ---
 const GUIDE_LINES = {
-  hero:  { mood: 'happy',   text: "Hey, I'm Squarey! I hopped out of the hero to walk you through FloorSquare as you scroll." },
-  swipe: { mood: 'excited', text: "Your turn! Swipe right to match a mandate, left to pass. Contact details stay masked until both sides match." },
-  steps: { mood: 'happy',   text: "Just 3 steps: verify your RERA tag, post one mandate or requirement, then match with another broker." },
-  join:  { mood: 'excited', text: "Ready? Drop your name and WhatsApp number and I'll save your spot on the Jaipur Alpha list!" },
-  faq:   { mood: 'happy',   text: "Still curious? Co-broking, areas we cover and pricing are all answered right here." },
+  hero:     { mood: 'happy',   text: "Hey, I'm Squarey! I hopped out of the hero to walk you through FloorSquare as you scroll." },
+  problem:  { mood: 'happy',   text: "Here's the problem: a client in C-Scheme, a landlord with the perfect space, and a group chat where they never meet." },
+  swipe:    { mood: 'excited', text: "Your turn! Swipe right to match a mandate, left to pass. Contact details stay masked until both sides match." },
+  steps:    { mood: 'happy',   text: "Just 3 steps: verify your RERA tag, post one mandate or requirement, then match with another broker." },
+  why:      { mood: 'excited', text: "No listing fees, no commission cut, and your contact stays hidden until both brokers match." },
+  audience: { mood: 'happy',   text: "Broker, landlord or tenant, there's a spot for you. You pick your role when you join." },
+  areas:    { mood: 'happy',   text: "We start with Jaipur's busiest commercial pockets, from C-Scheme to Sitapura." },
+  roadmap:  { mood: 'happy',   text: "We're in invite-only alpha now. The swipe app and premium tools come next." },
+  join:     { mood: 'excited', text: "Ready? Drop your name and WhatsApp number and I'll save your spot on the Jaipur Alpha list!" },
+  about:    { mood: 'happy',   text: "Quick intro: FloorSquare is a co-broking exchange built just for Jaipur's commercial brokers." },
+  faq:      { mood: 'happy',   text: "Still curious? Pricing, commissions and how matching works are all answered here." },
+  contact:  { mood: 'excited', text: "Want to talk to a human? Reach out here, or join the alpha and we'll get in touch." },
 };
 
 function ScrollGuide() {
@@ -234,6 +257,7 @@ function ScrollGuide() {
   const [docked, setDocked] = useState(false);
   const [ready, setReady] = useState(false);
   const [bubbleOpen, setBubbleOpen] = useState(true);
+  const [small, setSmall] = useState(false);
   const charRef = useRef(null);
 
   // which section is crossing the middle of the screen?
@@ -292,6 +316,15 @@ function ScrollGuide() {
     };
   }, []);
 
+  // phones: keep the bubble off the signup form
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)');
+    const on = () => setSmall(mq.matches);
+    on();
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+
   // typewriter effect once docked (instant for reduced-motion users)
   useEffect(() => {
     if (!docked) { setTyped(''); return; }
@@ -323,7 +356,7 @@ function ScrollGuide() {
         <SquareyMascot className="w-full h-full" mood={docked ? line.mood : 'happy'} />
       </button>
 
-      {docked && bubbleOpen && (
+      {docked && bubbleOpen && !(small && active === 'join') && (
         <div
           key={active}
           aria-hidden="true"
@@ -338,21 +371,15 @@ function ScrollGuide() {
   );
 }
 
-export default function LandingPage({ children }) {
+export default function LandingPage({ children, problem, afterSteps }) {
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [submitted, setSubmitted] = useState(false);
-      const [streakCount, setStreakCount] = useState(18);
-      const [xpPoints, setXpPoints] = useState(620);
       const [submitError, setSubmitError] = useState(false);
       const [submitting, setSubmitting] = useState(false);
       const [showSuccess, setShowSuccess] = useState(false);
       const [submittedName, setSubmittedName] = useState('');
       const [selectedRole, setSelectedRole] = useState('broker');
-
-      const handleMatchSuccess = () => {
-        setXpPoints((prev) => prev + 100);
-        setStreakCount((prev) => prev + 1);
-      };
+      const [menuOpen, setMenuOpen] = useState(false);
 
       const handleFormSubmit = async (e) => {
         if (e) e.preventDefault();
@@ -384,41 +411,52 @@ export default function LandingPage({ children }) {
           <ScrollGuide />
           {/* Header Bar */}
           <header className="sticky top-0 z-50 bg-white border-b-4 border-slate-900 shadow-sm">
-            <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FSLogo className="w-10 h-10" />
+            <div className="max-w-6xl mx-auto px-3 sm:px-4 h-16 sm:h-20 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <FSLogo className="w-8 h-8 sm:w-10 sm:h-10" />
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[28px] leading-none font-bold tracking-tight text-slate-900 font-brand">FloorSquare</span>
-                    <span className="bg-[#FF5722] text-white font-black text-[10px] px-2.5 py-0.5 rounded-full border-2 border-slate-900 uppercase">JAIPUR ALPHA</span>
+                    <span className="text-2xl sm:text-[28px] leading-none font-bold tracking-tight text-slate-900 font-brand">FloorSquare</span>
+                    <span className="hidden sm:inline-block bg-[#FF5722] text-white font-black text-[10px] px-2.5 py-0.5 rounded-full border-2 border-slate-900 uppercase">JAIPUR ALPHA</span>
                   </div>
-                  <span className="text-[11px] font-bold text-slate-600 block">CRE Co-Broking Exchange</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-slate-600 block whitespace-nowrap">CRE Co-Broking Exchange</span>
                 </div>
               </div>
 
-              <div className="hidden sm:flex items-center gap-4 font-black text-xs font-mono">
-                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-orange-100 border-2 border-slate-900 text-[#FF5722] shadow-[0_3px_0_#0f172a]">
-                  🔥 <span>{streakCount} DEAL STREAK</span>
-                </div>
-                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-amber-100 border-2 border-slate-900 text-amber-900 shadow-[0_3px_0_#0f172a]">
-                  🏆 <span>{xpPoints} BROKER XP</span>
-                </div>
-              </div>
+              <nav aria-label="Main" className="hidden xl:flex items-center gap-6 text-[13px] font-black text-slate-800">
+                {NAV_LINKS.map((l) => (
+                  <a key={l.href} href={l.href} className="hover:text-[#FF5722] transition-colors">{l.label}</a>
+                ))}
+              </nav>
 
-              <button onClick={() => setIsModalOpen(true)} className="px-5 py-2.5 rounded-2xl bg-[#FF5722] hover:bg-[#F44336] active:translate-y-1 text-white font-black text-xs uppercase border-2 border-slate-900 shadow-[0_4px_0_#0f172a] cursor-pointer">
-                ⚡ CLAIM ALPHA PASS
+              <div className="flex items-center gap-2 shrink-0">
+                <button onClick={() => setIsModalOpen(true)} className="px-3 sm:px-5 py-2.5 rounded-2xl bg-[#FF5722] hover:bg-[#F44336] active:translate-y-1 text-white font-black text-xs uppercase whitespace-nowrap border-2 border-slate-900 shadow-[0_4px_0_#0f172a] cursor-pointer">
+                <span className="sm:hidden">⚡ JOIN</span><span className="hidden sm:inline">⚡ CLAIM ALPHA PASS</span>
               </button>
+                <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer" aria-label="FloorSquare on LinkedIn" className="hidden xl:flex w-11 h-11 rounded-2xl bg-[#0A66C2] text-white items-center justify-center border-2 border-slate-900 shadow-[0_3px_0_#0f172a] hover:-translate-y-0.5 transition-transform">
+                  <LinkedInIcon />
+                </a>
+                <button type="button" onClick={() => setMenuOpen((v) => !v)} aria-label="Toggle menu" aria-expanded={menuOpen} className="xl:hidden w-11 h-11 rounded-2xl bg-white border-2 border-slate-900 shadow-[0_3px_0_#0f172a] text-lg font-black cursor-pointer">{menuOpen ? '✕' : '☰'}</button>
+              </div>
             </div>
+          {menuOpen && (
+              <nav aria-label="Mobile" className="xl:hidden border-t-4 border-slate-900 bg-white px-4 py-3 flex flex-col">
+                {NAV_LINKS.map((l) => (
+                  <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className="py-3 font-black text-sm text-slate-800 border-b-2 border-slate-100 last:border-0">{l.label}</a>
+                ))}
+                <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer" className="py-3 font-black text-sm text-[#0A66C2] flex items-center gap-2"><LinkedInIcon className="w-4 h-4" /> LinkedIn</a>
+              </nav>
+            )}
           </header>
 
           {/* Hero Section */}
-          <section data-guide="hero" className="pt-8 pb-14 px-4">
+          <section data-guide="hero" className="pt-6 sm:pt-8 pb-10 sm:pb-14 px-3 sm:px-4">
             <div className="max-w-5xl mx-auto">
-              <div className="bg-white rounded-3xl border-4 border-slate-900 p-8 sm:p-12 shadow-[0_8px_0_#0f172a]">
+              <div className="bg-white rounded-3xl border-4 border-slate-900 p-5 sm:p-12 shadow-[0_8px_0_#0f172a]">
                 <div className="grid md:grid-cols-12 gap-8 items-center">
                   <div className="md:col-span-7 space-y-6">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FFB300] border-2 border-slate-900 font-mono text-xs font-black text-slate-950 shadow-[0_2px_0_#0f172a]">
-                      ✨ <span>JAIPUR HUB: 480+ RERA BROKERS JOINED</span>
+                    <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-2xl sm:rounded-full bg-[#FFB300] border-2 border-slate-900 font-mono text-[10px] sm:text-xs leading-snug font-black text-slate-950 shadow-[0_2px_0_#0f172a]">
+                      ✨ <span>INVITE-ONLY JAIPUR ALPHA • FREE FOR RERA BROKERS</span>
                     </div>
 
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.15] tracking-tight">
@@ -430,7 +468,7 @@ export default function LandingPage({ children }) {
                       No listing subscriptions. No commission cuts. FloorSquare connects verified commercial brokers with direct landlord mandates & buyer requirements across Jaipur in under 2 minutes.
                     </p>
 
-                    <button onClick={() => setIsModalOpen(true)} className="px-8 py-4 rounded-2xl bg-[#FF5722] hover:bg-[#f44336] active:translate-y-1 text-white font-black text-base uppercase border-2 border-slate-900 shadow-[0_6px_0_#0f172a] cursor-pointer">
+                    <button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto px-6 sm:px-8 py-4 rounded-2xl bg-[#FF5722] hover:bg-[#f44336] active:translate-y-1 text-white font-black text-sm sm:text-base uppercase border-2 border-slate-900 shadow-[0_6px_0_#0f172a] cursor-pointer">
                       RESERVE BROKER SPOT NOW
                     </button>
 
@@ -461,11 +499,13 @@ export default function LandingPage({ children }) {
             </div>
           </section>
 
+          {problem}
+
           {/* Swipe Deck Section */}
-          <SwipeSimulator onMatch={handleMatchSuccess} onRequestModal={() => setIsModalOpen(true)} />
+          <SwipeSimulator onRequestModal={() => setIsModalOpen(true)} />
 
           {/* Gamified Skill Tree Section */}
-          <section data-guide="steps" className="py-16 px-4 bg-[#FFB300]/20 border-y-4 border-slate-900">
+          <section id="how-it-works" data-guide="steps" className="scroll-mt-24 py-12 sm:py-16 px-4 bg-[#FFB300]/20 border-y-4 border-slate-900">
             <div className="max-w-5xl mx-auto">
               <div className="text-center space-y-2 mb-12">
                 <span className="px-3 py-1 rounded-full bg-[#FF5722] text-white border-2 border-slate-900 text-xs font-black uppercase shadow-[0_2px_0_#0f172a]">
@@ -493,10 +533,12 @@ export default function LandingPage({ children }) {
             </div>
           </section>
 
+          {afterSteps}
+
           {/* Embedded Registration Form */}
-          <section id="onboarding" data-guide="join" className="py-16 px-4">
+          <section id="onboarding" data-guide="join" className="py-12 sm:py-16 px-4">
             <div className="max-w-2xl mx-auto">
-              <div className="bg-white rounded-3xl border-4 border-slate-900 p-8 sm:p-10 shadow-[0_8px_0_#0f172a] space-y-6">
+              <div className="bg-white rounded-3xl border-4 border-slate-900 p-5 sm:p-10 shadow-[0_8px_0_#0f172a] space-y-6">
                 <div className="text-center space-y-2">
                   <div className="flex justify-center -space-x-2 mb-2">
                     <SquareyMascot className="w-12 h-12" />
@@ -515,7 +557,7 @@ export default function LandingPage({ children }) {
                   <form onSubmit={handleFormSubmit} className="space-y-4 font-mono text-xs">
                     <div>
                       <label className="block font-black text-slate-900 mb-2 uppercase">SELECT YOUR ROLE</label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <button type="button" onClick={() => setSelectedRole('broker')} className={`p-3 rounded-xl border-3 font-black text-[11px] cursor-pointer ${selectedRole === 'broker' ? 'bg-[#FF5722] text-white border-slate-900 shadow-[0_3px_0_#0f172a]' : 'bg-slate-50 border-slate-300 text-slate-600'}`}>💼 RERA BROKER</button>
                         <button type="button" onClick={() => setSelectedRole('landlord')} className={`p-3 rounded-xl border-3 font-black text-[11px] cursor-pointer ${selectedRole === 'landlord' ? 'bg-[#FFB300] text-slate-950 border-slate-900 shadow-[0_3px_0_#0f172a]' : 'bg-slate-50 border-slate-300 text-slate-600'}`}>🔑 LANDLORD</button>
                         <button type="button" onClick={() => setSelectedRole('tenant')} className={`p-3 rounded-xl border-3 font-black text-[11px] cursor-pointer ${selectedRole === 'tenant' ? 'bg-emerald-300 text-slate-950 border-slate-900 shadow-[0_3px_0_#0f172a]' : 'bg-slate-50 border-slate-300 text-slate-600'}`}>🏢 TENANT/BUYER</button>
@@ -535,6 +577,7 @@ export default function LandingPage({ children }) {
                     <button type="submit" disabled={submitting} className="w-full py-4 rounded-2xl bg-[#FF5722] text-white font-black text-sm uppercase border-2 border-slate-900 shadow-[0_4px_0_#0f172a] cursor-pointer disabled:opacity-60">
                       {submitting ? 'SAVING...' : 'CONFIRM MY QUEUE RESERVATION'}
                     </button>
+                    <p className="text-center text-[11px] font-bold text-slate-500">We use your number only to contact you about FloorSquare.</p>
                     {submitError && <p className="text-rose-600 font-black text-center">Something went wrong. Please try again.</p>}
                   </form>
                 )}
@@ -545,7 +588,7 @@ export default function LandingPage({ children }) {
           {/* Modal */}
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-              <div className="relative w-full max-w-md rounded-3xl bg-white border-4 border-slate-900 p-6 shadow-[0_10px_0_#0f172a] space-y-4 font-mono text-xs">
+              <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-white border-4 border-slate-900 p-6 shadow-[0_10px_0_#0f172a] space-y-4 font-mono text-xs">
                 <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-slate-500 font-black text-lg">✕</button>
                 <div className="flex items-center gap-3">
                   <SquareyMascot className="w-12 h-12" mood="excited" />
@@ -590,6 +633,12 @@ export default function LandingPage({ children }) {
             <div className="flex items-center justify-center gap-2 mb-2">
               <FSLogo className="w-6 h-6" />
               <span className="text-slate-900 font-bold text-sm font-brand">FloorSquare Jaipur</span>
+            </div>
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mb-3">
+              {NAV_LINKS.map((l) => (
+                <a key={l.href} href={l.href} className="hover:text-[#FF5722]">{l.label}</a>
+              ))}
+              <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[#FF5722]">LinkedIn</a>
             </div>
             <p>© {new Date().getFullYear()} FloorSquare Technologies. All rights reserved.</p>
           </footer>

@@ -57,3 +57,8 @@ body { background:#FFFBEB; color:#0f172a; }
 @media (prefers-reduced-motion: reduce) {
   .animate-float-bob, .animate-bubble-pop { animation: none; }
 }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body { overflow-x: clip; }
