@@ -37,7 +37,7 @@ export default function Page() {
   return (
     <main>
       <LandingPage>
-        <section className="py-16 px-4" aria-labelledby="about-heading">
+        <section data-guide="faq" className="py-16 px-4" aria-labelledby="about-heading">
           <div className="max-w-3xl mx-auto space-y-8">
             <div className="bg-white rounded-3xl border-4 border-slate-900 p-8 shadow-[0_8px_0_#0f172a] space-y-4">
               <h2 id="about-heading" className="text-3xl font-black text-slate-900">

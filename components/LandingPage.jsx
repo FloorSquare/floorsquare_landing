@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 // --- MASCOTS & LOGO ---
     const SquareyMascot = ({ className = "w-16 h-16", mood = "happy", reaction = null }) => {
       const getAnimClass = () => {
@@ -94,12 +94,14 @@ import { useState } from 'react';
     );
 
     const FSLogo = ({ className = "h-9 w-9" }) => (
-      <div className={`relative inline-flex items-center justify-center ${className}`}>
-        <svg viewBox="0 0 200 200" className="w-full h-full filter drop-shadow-[0_4px_0_#0f172a]">
-          <polygon points="100,18 175,61 175,147 100,190 25,147 25,61" fill="#0F172A" stroke="#FF5722" strokeWidth="8" strokeLinejoin="round" />
-          <polygon points="100,24 165,61 100,98 35,61" fill="#1E293B" stroke="#FF5722" strokeWidth="2" />
-          <path d="M142 58 L72 98 L128 130 L58 170" fill="none" stroke="#FFB300" strokeWidth="14" strokeLinecap="round" strokeLinejoin="miter" />
-          <path d="M142 58 L72 98 L128 130 L58 170" fill="none" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="miter" />
+      <div className={`relative inline-flex items-center justify-center shrink-0 ${className}`}>
+        <svg viewBox="0 0 200 200" className="w-full h-full filter drop-shadow-[0_4px_0_#0f172a]" aria-hidden="true">
+          <polygon points="100,20 175,60 175,140 100,180 25,140 25,60" fill="#FF5722" stroke="#0F172A" strokeWidth="8" strokeLinejoin="round" />
+          <polygon points="100,26 165,60 100,95 35,60" fill="#FF784E" stroke="#0F172A" strokeWidth="4" />
+          <polygon points="35,66 95,100 95,170 35,136" fill="#D84315" stroke="#0F172A" strokeWidth="4" />
+          <polygon points="105,100 165,66 165,136 105,170" fill="#BF360C" stroke="#0F172A" strokeWidth="4" />
+          <path d="M55 35 C55 15, 145 15, 145 35 Z" fill="#FFB300" stroke="#0F172A" strokeWidth="5" />
+          <rect x="45" y="32" width="110" height="10" rx="5" fill="#FFA000" stroke="#0F172A" strokeWidth="4" />
         </svg>
       </div>
     );
@@ -136,7 +138,7 @@ import { useState } from 'react';
       const handleResetDeck = () => setCards(initialCards);
 
       return (
-        <section className="py-12 px-4">
+        <section data-guide="swipe" className="py-12 px-4">
           <div className="max-w-xl mx-auto">
             <div className="text-center space-y-2 mb-6">
               <span className="px-3 py-1 rounded-full bg-[#FFB300] border-2 border-slate-900 text-xs font-black uppercase tracking-wider text-slate-950 shadow-[0_2px_0_#0f172a]">
@@ -217,7 +219,126 @@ import { useState } from 'react';
     }
 
     // --- MAIN APP ---
-    export default function LandingPage({ children }) {
+    // --- SCROLL GUIDE: the hero Squarey hops out of the hero card, docks on the right, and explains each section ---
+const GUIDE_LINES = {
+  hero:  { mood: 'happy',   text: "Hey, I'm Squarey! I hopped out of the hero to walk you through FloorSquare as you scroll." },
+  swipe: { mood: 'excited', text: "Your turn! Swipe right to match a mandate, left to pass. Contact details stay masked until both sides match." },
+  steps: { mood: 'happy',   text: "Just 3 steps: verify your RERA tag, post one mandate or requirement, then match with another broker." },
+  join:  { mood: 'excited', text: "Ready? Drop your name and WhatsApp number and I'll save your spot on the Jaipur Alpha list!" },
+  faq:   { mood: 'happy',   text: "Still curious? Co-broking, areas we cover and pricing are all answered right here." },
+};
+
+function ScrollGuide() {
+  const [active, setActive] = useState('hero');
+  const [typed, setTyped] = useState('');
+  const [docked, setDocked] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [bubbleOpen, setBubbleOpen] = useState(true);
+  const charRef = useRef(null);
+
+  // which section is crossing the middle of the screen?
+  useEffect(() => {
+    const els = document.querySelectorAll('[data-guide]');
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((en) => en.isIntersecting && setActive(en.target.dataset.guide)),
+      { rootMargin: '-45% 0px -45% 0px' }
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
+  // scroll-linked flight: sits exactly on the hero slot, then glides to the right edge as the hero scrolls away
+  useEffect(() => {
+    const slot = document.querySelector('[data-squarey-slot]');
+    const inner = slot ? slot.firstElementChild : null;
+    if (inner) inner.style.visibility = 'hidden'; // the flying one replaces it
+    let raf = 0;
+    let wasDocked = false;
+
+    const update = () => {
+      const el = charRef.current;
+      if (!el) return;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const dockSize = vw < 640 ? 56 : 68;
+      const dockLeft = vw - dockSize - 12;
+      const dockTop = vh - dockSize - 14;
+      let p = 1, left = dockLeft, top = dockTop, size = dockSize;
+      if (slot) {
+        const r = slot.getBoundingClientRect();
+        p = Math.min(1, Math.max(0, (90 - r.top) / 240));
+        const e = p * p * (3 - 2 * p); // smoothstep
+        left = r.left + (dockLeft - r.left) * e;
+        top = r.top + (dockTop - r.top) * e;
+        size = r.width + (dockSize - r.width) * e;
+      }
+      el.style.width = size + 'px';
+      el.style.height = size + 'px';
+      el.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+      const nowDocked = p > 0.85;
+      if (nowDocked !== wasDocked) { wasDocked = nowDocked; setDocked(nowDocked); }
+    };
+    const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(update); };
+
+    update();
+    setReady(true);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (inner) inner.style.visibility = '';
+    };
+  }, []);
+
+  // typewriter effect once docked (instant for reduced-motion users)
+  useEffect(() => {
+    if (!docked) { setTyped(''); return; }
+    const full = GUIDE_LINES[active]?.text || '';
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setTyped(full); return; }
+    let i = 0;
+    setTyped('');
+    const t = setInterval(() => {
+      i += 1;
+      setTyped(full.slice(0, i));
+      if (i >= full.length) clearInterval(t);
+    }, 20);
+    return () => clearInterval(t);
+  }, [active, docked]);
+
+  const line = GUIDE_LINES[active] || GUIDE_LINES.hero;
+
+  return (
+    <>
+      <button
+        ref={charRef}
+        type="button"
+        onClick={() => docked && setBubbleOpen((v) => !v)}
+        aria-label="Toggle Squarey tips"
+        tabIndex={docked ? 0 : -1}
+        className="fixed top-0 left-0 z-40 p-0 bg-transparent border-0 will-change-transform"
+        style={{ visibility: ready ? 'visible' : 'hidden', pointerEvents: docked ? 'auto' : 'none', cursor: docked ? 'pointer' : 'default' }}
+      >
+        <SquareyMascot className="w-full h-full" mood={docked ? line.mood : 'happy'} />
+      </button>
+
+      {docked && bubbleOpen && (
+        <div
+          key={active}
+          aria-hidden="true"
+          className="fixed right-3 bottom-[82px] sm:bottom-[94px] z-40 w-[220px] sm:w-[260px] rounded-2xl bg-white border-4 border-slate-900 p-3 pr-7 shadow-[0_5px_0_#0f172a] animate-bubble-pop min-h-[84px]"
+        >
+          <button onClick={() => setBubbleOpen(false)} aria-label="Hide tip" className="absolute top-1 right-2 text-slate-500 font-black text-sm cursor-pointer">✕</button>
+          <p className="font-mono text-[11px] sm:text-xs font-bold text-slate-800 leading-snug">{typed}</p>
+          <span className="absolute -bottom-[14px] right-6 w-4 h-4 bg-white border-r-4 border-b-4 border-slate-900 rotate-45" />
+        </div>
+      )}
+    </>
+  );
+}
+
+export default function LandingPage({ children }) {
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [submitted, setSubmitted] = useState(false);
       const [streakCount, setStreakCount] = useState(18);
@@ -260,6 +381,7 @@ import { useState } from 'react';
 
       return (
         <div className="min-h-screen bg-[#FFFBEB]">
+          <ScrollGuide />
           {/* Header Bar */}
           <header className="sticky top-0 z-50 bg-white border-b-4 border-slate-900 shadow-sm">
             <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between">
@@ -290,7 +412,7 @@ import { useState } from 'react';
           </header>
 
           {/* Hero Section */}
-          <section className="pt-8 pb-14 px-4">
+          <section data-guide="hero" className="pt-8 pb-14 px-4">
             <div className="max-w-5xl mx-auto">
               <div className="bg-white rounded-3xl border-4 border-slate-900 p-8 sm:p-12 shadow-[0_8px_0_#0f172a]">
                 <div className="grid md:grid-cols-12 gap-8 items-center">
@@ -325,7 +447,7 @@ import { useState } from 'react';
                   <div className="md:col-span-5">
                     <div className="bg-[#FFF3E0] rounded-3xl border-4 border-slate-900 p-6 shadow-[0_6px_0_#0f172a] text-center space-y-4">
                       <div className="flex justify-center items-center gap-2">
-                        <SquareyMascot className="w-24 h-24" />
+                        <div data-squarey-slot className="w-24 h-24"><SquareyMascot className="w-24 h-24" /></div>
                         <AgentBannaMascot className="w-20 h-20" />
                       </div>
                       <div className="bg-white rounded-2xl border-3 border-slate-900 p-4 shadow-[0_3px_0_#0f172a] space-y-1 font-mono text-xs">
@@ -343,7 +465,7 @@ import { useState } from 'react';
           <SwipeSimulator onMatch={handleMatchSuccess} onRequestModal={() => setIsModalOpen(true)} />
 
           {/* Gamified Skill Tree Section */}
-          <section className="py-16 px-4 bg-[#FFB300]/20 border-y-4 border-slate-900">
+          <section data-guide="steps" className="py-16 px-4 bg-[#FFB300]/20 border-y-4 border-slate-900">
             <div className="max-w-5xl mx-auto">
               <div className="text-center space-y-2 mb-12">
                 <span className="px-3 py-1 rounded-full bg-[#FF5722] text-white border-2 border-slate-900 text-xs font-black uppercase shadow-[0_2px_0_#0f172a]">
@@ -372,7 +494,7 @@ import { useState } from 'react';
           </section>
 
           {/* Embedded Registration Form */}
-          <section id="onboarding" className="py-16 px-4">
+          <section id="onboarding" data-guide="join" className="py-16 px-4">
             <div className="max-w-2xl mx-auto">
               <div className="bg-white rounded-3xl border-4 border-slate-900 p-8 sm:p-10 shadow-[0_8px_0_#0f172a] space-y-6">
                 <div className="text-center space-y-2">
