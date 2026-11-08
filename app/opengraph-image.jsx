@@ -22,7 +22,7 @@ export default function Image() {
       >
         <div style={{ display: 'flex', fontSize: 40, fontWeight: 900, color: '#FF5722' }}>FloorSquare</div>
         <div style={{ display: 'flex', fontSize: 76, fontWeight: 900, color: '#0f172a', marginTop: 24, lineHeight: 1.1 }}>
-          Commercial co-broking in Jaipur, 10x faster
+          Find a verified co-broker for your Jaipur commercial deal
         </div>
         <div style={{ display: 'flex', fontSize: 34, color: '#334155', marginTop: 32 }}>
           Match mandates with verified RERA brokers

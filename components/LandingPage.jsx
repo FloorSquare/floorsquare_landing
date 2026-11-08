@@ -223,6 +223,9 @@ import { useState } from 'react';
       const [streakCount, setStreakCount] = useState(18);
       const [xpPoints, setXpPoints] = useState(620);
       const [submitError, setSubmitError] = useState(false);
+      const [submitting, setSubmitting] = useState(false);
+      const [showSuccess, setShowSuccess] = useState(false);
+      const [submittedName, setSubmittedName] = useState('');
       const [selectedRole, setSelectedRole] = useState('broker');
 
       const handleMatchSuccess = () => {
@@ -232,8 +235,10 @@ import { useState } from 'react';
 
       const handleFormSubmit = async (e) => {
         if (e) e.preventDefault();
+        if (submitting) return false;
         const fd = new FormData(e.currentTarget);
         setSubmitError(false);
+        setSubmitting(true);
         try {
           const res = await fetch('/api/waitlist', {
             method: 'POST',
@@ -241,9 +246,15 @@ import { useState } from 'react';
             body: JSON.stringify({ name: fd.get('name'), phone: fd.get('phone'), role: selectedRole }),
           });
           if (!res.ok) throw new Error('bad response');
+          setSubmittedName(String(fd.get('name') || '').trim().split(' ')[0]);
           setSubmitted(true);
+          setShowSuccess(true);
+          return true;
         } catch {
           setSubmitError(true);
+          return false;
+        } finally {
+          setSubmitting(false);
         }
       };
 
@@ -288,9 +299,9 @@ import { useState } from 'react';
                       ✨ <span>JAIPUR HUB: 480+ RERA BROKERS JOINED</span>
                     </div>
 
-                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.1] tracking-tight">
-                      Co-Broking in Jaipur <br />
-                      <span className="text-[#FF5722] underline decoration-[#FFB300] decoration-wavy">Just Got 10x Faster!</span>
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.15] tracking-tight">
+                      Find a Verified Co-Broker for Your Jaipur Commercial Deal <br />
+                      <span className="text-[#FF5722] underline decoration-[#FFB300] decoration-wavy">in Under 2 Minutes</span>
                     </h1>
 
                     <p className="text-base sm:text-lg text-slate-700 font-bold leading-relaxed">
@@ -399,8 +410,8 @@ import { useState } from 'react';
                       <input type="tel" name="phone" autoComplete="tel" required placeholder="+91 98290 XXXXX" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-3 border-slate-900 font-bold" />
                     </div>
 
-                    <button type="submit" className="w-full py-4 rounded-2xl bg-[#FF5722] text-white font-black text-sm uppercase border-2 border-slate-900 shadow-[0_4px_0_#0f172a] cursor-pointer">
-                      CONFIRM MY QUEUE RESERVATION
+                    <button type="submit" disabled={submitting} className="w-full py-4 rounded-2xl bg-[#FF5722] text-white font-black text-sm uppercase border-2 border-slate-900 shadow-[0_4px_0_#0f172a] cursor-pointer disabled:opacity-60">
+                      {submitting ? 'SAVING...' : 'CONFIRM MY QUEUE RESERVATION'}
                     </button>
                     {submitError && <p className="text-rose-600 font-black text-center">Something went wrong. Please try again.</p>}
                   </form>
@@ -421,7 +432,7 @@ import { useState } from 'react';
                     <p className="text-[11px] font-bold text-slate-600">Verified RERA Broker Portal</p>
                   </div>
                 </div>
-                <form onSubmit={(e) => { handleFormSubmit(e); setIsModalOpen(false); }} className="space-y-3">
+                <form onSubmit={async (e) => { const ok = await handleFormSubmit(e); if (ok) setIsModalOpen(false); }} className="space-y-3">
                   <div>
                     <label className="block font-black text-slate-900 mb-1">YOUR FULL NAME</label>
                     <input type="text" name="name" autoComplete="name" required placeholder="e.g. Rajesh Sharma" className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border-3 border-slate-900 font-bold" />
@@ -430,10 +441,23 @@ import { useState } from 'react';
                     <label className="block font-black text-slate-900 mb-1">WHATSAPP NUMBER</label>
                     <input type="tel" name="phone" autoComplete="tel" required placeholder="+91 98290 XXXXX" className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border-3 border-slate-900 font-bold" />
                   </div>
-                  <button type="submit" className="w-full py-3.5 rounded-2xl bg-[#FF5722] text-white font-black text-xs uppercase border-2 border-slate-900 shadow-[0_4px_0_#0f172a] cursor-pointer">
-                    UNLOCK MY INVITE TICKET
+                  <button type="submit" disabled={submitting} className="w-full py-3.5 rounded-2xl bg-[#FF5722] text-white font-black text-xs uppercase border-2 border-slate-900 shadow-[0_4px_0_#0f172a] cursor-pointer disabled:opacity-60">
+                    {submitting ? 'SAVING...' : 'UNLOCK MY INVITE TICKET'}
                   </button>
+                  {submitError && <p className="text-rose-600 font-black text-center">Something went wrong. Please try again.</p>}
                 </form>
+              </div>
+            </div>
+          )}
+
+          {showSuccess && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="success-title">
+              <div className="relative w-full max-w-sm rounded-3xl bg-white border-4 border-slate-900 p-8 shadow-[0_10px_0_#0f172a] space-y-4 font-mono text-center">
+                <button onClick={() => setShowSuccess(false)} className="absolute top-4 right-4 text-slate-500 font-black text-lg cursor-pointer" aria-label="Close">✕</button>
+                <SquareyMascot className="w-20 h-20 mx-auto" mood="excited" />
+                <h3 id="success-title" className="text-2xl font-black text-slate-900">You are in{submittedName ? `, ${submittedName}` : ''}! 🎉</h3>
+                <p className="text-xs font-bold text-slate-700">Your spot on the Jaipur Alpha list is reserved. We will WhatsApp you on the number you gave as soon as your access opens.</p>
+                <button onClick={() => setShowSuccess(false)} className="w-full py-3.5 rounded-2xl bg-[#FF5722] text-white font-black text-xs uppercase border-2 border-slate-900 shadow-[0_4px_0_#0f172a] cursor-pointer">GOT IT</button>
               </div>
             </div>
           )}
