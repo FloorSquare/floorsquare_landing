@@ -389,7 +389,7 @@ export default function LandingPage({ children }) {
                 <FSLogo className="w-10 h-10" />
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-black tracking-tight text-slate-900 font-mono">FloorSquare</span>
+                    <span className="text-[28px] leading-none font-bold tracking-tight text-slate-900 font-brand">FloorSquare</span>
                     <span className="bg-[#FF5722] text-white font-black text-[10px] px-2.5 py-0.5 rounded-full border-2 border-slate-900 uppercase">JAIPUR ALPHA</span>
                   </div>
                   <span className="text-[11px] font-bold text-slate-600 block">CRE Co-Broking Exchange</span>
@@ -589,7 +589,7 @@ export default function LandingPage({ children }) {
           <footer className="max-w-5xl mx-auto px-4 pt-8 text-center text-xs font-mono font-bold text-slate-600">
             <div className="flex items-center justify-center gap-2 mb-2">
               <FSLogo className="w-6 h-6" />
-              <span className="text-slate-900 font-black">FloorSquare Jaipur</span>
+              <span className="text-slate-900 font-bold text-sm font-brand">FloorSquare Jaipur</span>
             </div>
             <p>© {new Date().getFullYear()} FloorSquare Technologies. All rights reserved.</p>
           </footer>
